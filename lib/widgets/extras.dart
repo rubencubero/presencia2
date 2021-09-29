@@ -10,6 +10,11 @@ class Extras extends StatefulWidget {
 
   @override
   _ExtrasState createState() => _ExtrasState();
+
+  void clearCheckExtras() {
+    _extraPlusPuestoTrabajo = false;
+    _extraCambioTurno = false;
+  }
 }
 
 class _ExtrasState extends State<Extras> {

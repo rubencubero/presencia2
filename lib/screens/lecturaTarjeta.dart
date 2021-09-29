@@ -30,13 +30,14 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
   final Tarjeta _tarjeta = Tarjeta(codigoMagnetico: '', lecturaActiva: false);
 
   late List<Persona> _personas;
-  bool extraPlusPuestoTrabajo = false;
-  bool extraCambioTurno = false;
+  //bool extraPlusPuestoTrabajo = false;
+  //bool extraCambioTurno = false;
 
   late Timer timer;
   late Timer timerReloj;
   late FocusNode myFocusNode;
   late DateTime hora = DateTime.now();
+  Extras extras = Extras();
 
   void updateListPersonas() async {
     widget._personas.clear();
@@ -94,7 +95,7 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
                 _renderizarMensajeTarjeta('Pase la tarjeta para identificarse'),
               ],
             )),
-        floatingActionButton: Extras()
+        floatingActionButton: extras
         /*ElevatedButton(
             style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(
@@ -279,9 +280,13 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
             if (personaLeida!.id != null) {
               /*Parte parte = await Parte.getParteActivo(personaLeida);
                                 mensaje = await registrarLectura(parte, personaLeida);*/
-              var resultado = await Parte.registrarLectura(personaLeida, 282,
-                  widget.prefs, extraPlusPuestoTrabajo, extraCambioTurno);
-              clearCheckExtras();
+              var resultado = await Parte.registrarLectura(
+                  personaLeida,
+                  282,
+                  widget.prefs,
+                  extras.extraPlusPuestoTrabajo,
+                  extras.extraCambioTurno);
+              extras.clearCheckExtras();
               showDialog(
                   context: context,
                   builder: (BuildContext context) {
@@ -324,7 +329,7 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
     return mensaje;
   }
 
-  _renderizarOpcionesMarcaje(setstate) {
+  /*_renderizarOpcionesMarcaje(setstate) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -372,9 +377,9 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
         )
       ],
     );
-  }
+  }*/
 
-  _renderizarOpcionMarcaje(String texto, bool valor) {
+  /*_renderizarOpcionMarcaje(String texto, bool valor) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
@@ -395,14 +400,14 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
         ],
       ),
     );
-  }
+  }*/
 
-  void clearCheckExtras() {
+  /*void clearCheckExtras() {
     setState(() {
       extraCambioTurno = false;
       extraPlusPuestoTrabajo = false;
     });
-  }
+  }*/
 }
 
 Persona? validarUsuarioTarjeta(String idTarjeta, List<Persona> personas) {
