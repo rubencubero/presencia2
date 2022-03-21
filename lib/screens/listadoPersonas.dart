@@ -23,11 +23,12 @@ class _ListadoPersonasState extends State<ListadoPersonas> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.lightGreen[300],
         title: Text('Presencia', style: Styles.defaultText),
       ),
       body:
-          GridView.count(crossAxisCount: 3, children: _buildGridCards(context)),
-      floatingActionButton: extras,
+          GridView.count(crossAxisCount: 4, children: _buildGridCards(context)),
+      //floatingActionButton: extras,
     );
   }
 
@@ -35,8 +36,11 @@ class _ListadoPersonasState extends State<ListadoPersonas> {
     return List.generate(widget._personas.length, (index) {
       var persona = this.widget._personas[index];
       return InkResponse(
-          onTap: () => _navegarPinCode(context, persona),
+          onTap: () => !persona.isLogged
+              ? _navegarPinCode(context, persona)
+              : _showExtras(persona),
           child: Card(
+            color: persona.isLogged ? Colors.lightGreen[100] : Colors.white,
             clipBehavior: Clip.antiAlias,
             child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -105,14 +109,22 @@ class _ListadoPersonasState extends State<ListadoPersonas> {
         MaterialPageRoute(
             builder: (context) => PinCode(persona.password.toString())));
     if (resultado) {
-      var resultado = await Parte.registrarLectura(persona, 313, widget.prefs,
-          extras.extraPlusPuestoTrabajo, extras.extraCambioTurno);
+      var resultado = await Parte.registrarLectura(
+          persona,
+          313,
+          widget.prefs,
+          extras.extraPlusPuestoTrabajo,
+          extras.extraCambioTurno,
+          extras.extraColaboracion,
+          extras.extraFormacion);
       print(resultado.toString());
       await showDialog(
           context: context,
           builder: (BuildContext context) {
             Future.delayed(Duration(seconds: 2), () {
               Navigator.of(context).pop(true);
+              if (resultado.toLowerCase().contains('salida'))
+                Navigator.of(context).pop(true);
             });
             return Notificacion(
                 tipo: resultado.toLowerCase().contains('salida')
@@ -124,6 +136,85 @@ class _ListadoPersonasState extends State<ListadoPersonas> {
 
       cerrarListadoPersonas(context);
     }
+  }
+
+  void _showExtras(Persona persona) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (builder) {
+        return StatefulBuilder(
+          builder: (context, setstate) {
+            return Container(
+                height: 300,
+                color: Colors.white,
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              '${persona.descripcion} marca los extras necesarios antes de desconectar.',
+                              style: TextStyle(fontSize: 20.0),
+                            ),
+                          ),
+                          ElevatedButton(
+                            style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.all<Color>(
+                                        Colors.white),
+                                elevation:
+                                    MaterialStateProperty.all<double>(0)),
+                            child: Icon(Icons.close_rounded,
+                                size: 30.0, color: Colors.black),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ]),
+                    SizedBox(height: 3),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            extras.renderizarTipoPresencia(setstate),
+                            Divider(
+                              color: Colors.black54,
+                              indent: 0,
+                            ),
+                            extras.renderizarPlusesMarcaje(setstate),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: ElevatedButton(
+                              style: ButtonStyle(
+                                  padding: MaterialStateProperty.all<
+                                          EdgeInsetsGeometry>(
+                                      EdgeInsets.symmetric(
+                                          vertical: 30, horizontal: 20)),
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.lightGreen.shade300)),
+                              child: Text(
+                                'Desconectar',
+                                style: TextStyle(fontSize: 30.0),
+                              ),
+                              onPressed: () =>
+                                  _navegarPinCode(context, persona)),
+                        )
+                      ],
+                    )
+                  ],
+                ));
+          },
+        );
+      },
+    );
   }
 
   cerrarListadoPersonas(BuildContext context) {

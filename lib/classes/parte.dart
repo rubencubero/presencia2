@@ -1,3 +1,4 @@
+import 'package:presencia2/classes/estado.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'http.dart';
@@ -23,15 +24,20 @@ class Parte {
       int tipo,
       SharedPreferences preferences,
       bool extraPlusPuestoTrabajo,
-      bool extraCambioTurno) async {
+      bool extraCambioTurno,
+      bool extraColaboracion,
+      bool extraFormacion) async {
     Parte parte = await Parte.getParteActivo(persona);
+    List<Estado> listaEstados = await Estado.getListaEstadosPresencia();
     String resultado = '';
     String resultadoExtras = '';
+    String resultadoTipo = '';
 
     try {
+      var estado = listaEstados.firstWhere((element) => element.orden == 10);
       if (parte.id == 0) {
         //Registramos la entrada
-        resultado = await Parte.abrirParte(persona, tipo, preferences);
+        resultado = await Parte.abrirParte(persona, tipo, preferences, estado);
       } else {
         //Registramos la salida
         resultado = await Parte.cerrarParte(parte, persona, tipo, preferences);
@@ -39,12 +45,24 @@ class Parte {
         if (extraPlusPuestoTrabajo || extraCambioTurno)
           resultadoExtras = await Parte.registrarExtras(
               parte, extraPlusPuestoTrabajo, extraCambioTurno, preferences);
+        //Actualizar parte con el tipo
+        if (extraColaboracion || extraFormacion)
+        //Obtenemos el ID del tipo de presencia
+        if (listaEstados.isNotEmpty) {
+          if (extraFormacion)
+            estado = listaEstados.firstWhere((element) => element.orden == 20);
+          if (extraColaboracion)
+            estado = listaEstados.firstWhere((element) => element.orden == 30);
+          resultadoTipo = await Parte.actualizarTipoPresencia(parte, estado);
+        } else {
+          print('La lista de estados esta vacia');
+        }
       }
     } catch (e) {
       resultado = e.toString();
     }
 
-    return resultado + ' ' + resultadoExtras;
+    return resultado + ' ' + resultadoExtras + ' ' + resultadoTipo;
   }
 
   static Future<Parte> getParteActivo(Persona persona) async {
@@ -69,16 +87,16 @@ class Parte {
     return parte;
   }
 
-  static Future<String> abrirParte(
-      Persona persona, int tipo, SharedPreferences preferences) async {
-    //idpersona, idpdt, idpda, inicio,fin, idtlogin, idtlogout, observaciones, DATA, TIME,USER
+  static Future<String> abrirParte(Persona persona, int tipo,
+      SharedPreferences preferences, Estado estado) async {
+    //idpersona, idpdt, idpda, inicio,fin, idtlogin, idtlogout, observaciones, idtpresencia, DATA, TIME,USER
     await httpPost("registrar", {
       "values": persona.id! +
           ",0," +
           preferences.getInt('DeviceID').toString() +
           ",'" +
           DateFormat('yyyyMMdd kkmmss').format(DateTime.now()) +
-          "','',$tipo,0,'','" +
+          "','',$tipo,0,'',${estado.id},'" +
           DateFormat('yyyy-MM-dd').format(DateTime.now()) +
           "','" +
           DateFormat('kk:mm:ss').format(DateTime.now()) +
@@ -125,6 +143,16 @@ class Parte {
     });
 
     return '\n Extras registrados: \n ${extras.join('\n')}';
+  }
+
+  static Future<String> actualizarTipoPresencia(
+      Parte parte, Estado estado) async {
+    await httpPost("actualizarTipoPresencia", {
+      "values":
+          "UPDATE presencia SET idtpresencia = ${estado.id} WHERE id = ${parte.id.toString()};"
+    });
+
+    return '\n Tipo presencia actualizado: ${estado.descri}';
   }
 
   Parte(

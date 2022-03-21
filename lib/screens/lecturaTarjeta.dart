@@ -39,10 +39,11 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
   late DateTime hora = DateTime.now();
   Extras extras = Extras();
 
-  void updateListPersonas() async {
+  Future<bool> updateListPersonas() async {
     widget._personas.clear();
     _personas = await MockPersonas.getPersonas(widget.prefs.getInt('DeviceID'));
     print('updated list personas');
+    return true;
   }
 
   void initState() {
@@ -66,37 +67,46 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-            title: Text(
-              'Presencia',
-              style: Styles.defaultText,
-            ),
-            actions: _renderizarOpcionesAppBar(context)),
-        body: RawKeyboardListener(
-            autofocus: true,
-            focusNode: myFocusNode,
-            onKey: (RawKeyEvent event) async {
-              String resultado =
-                  await _capturarTeclaPulsada(event, context, _tarjeta);
-              if (resultado.length != 0) {
-                showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return Notificacion(
-                          tipo: Notificacion.warning,
-                          titulo: 'Alerta',
-                          mensaje: resultado);
-                    });
-              }
-            },
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _renderizarMensajeTarjeta('Pase la tarjeta para identificarse'),
-              ],
-            )),
-        floatingActionButton: extras
-        /*ElevatedButton(
+      appBar: AppBar(
+          backgroundColor: Colors.lightGreen[300],
+          title: Text(
+            'Presencia',
+            style: Styles.defaultText,
+          ),
+          actions: _renderizarOpcionesAppBar(context)),
+      body: RawKeyboardListener(
+          autofocus: true,
+          focusNode: myFocusNode,
+          onKey: (RawKeyEvent event) async {
+            String resultado =
+                await _capturarTeclaPulsada(event, context, _tarjeta);
+            if (resultado.length != 0) {
+              showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Notificacion(
+                        tipo: Notificacion.warning,
+                        titulo: 'Alerta',
+                        mensaje: resultado);
+                  });
+            }
+          },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _renderizarMensajeTarjeta('Pase la tarjeta para identificarse'),
+              _renderizarFechaHora(
+                  DateFormat(' HH:mm:ss dd/MM/yy').format(hora)),
+              /*Row(
+                  children: [
+                    Text(DateFormat(' HH:mm:ss dd/MM/yy').format(hora),
+                        style: TextStyle(fontSize: 25.0)),
+                  ],
+                )*/
+            ],
+          )),
+      //floatingActionButton: extras
+      /*ElevatedButton(
             style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(
                     Colors.lightGreen.shade300)),
@@ -160,7 +170,7 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
                 },
               );
             })*/
-        );
+    );
   }
 
   List<Widget> _renderizarOpcionesAppBar(BuildContext context) {
@@ -168,9 +178,9 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
       Padding(
           padding: EdgeInsets.only(right: 20),
           child: Container(
-              width: 500,
+              //width: 400,
               child: Row(children: <Widget>[
-                Expanded(
+            /*Expanded(
                   flex: 1,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -180,25 +190,26 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
                           style: TextStyle(fontSize: 25.0)),
                     ],
                   ),
-                ),
-                MaterialButton(
-                    onPressed: () {
-                      updateListPersonas();
-                      myFocusNode.requestFocus();
-                    },
-                    child: Icon(
-                      Icons.refresh,
-                      size: 46.0,
-                    )),
-                _navBarIconoListadoPersonas(context),
-                _navBarIconoConfiguracion(context, widget.prefs)
-              ])))
+                ),*/
+            GestureDetector(
+                onTap: () {
+                  updateListPersonas();
+                  myFocusNode.requestFocus();
+                },
+                child: Icon(
+                  Icons.refresh,
+                  size: 36.0,
+                )),
+            _navBarIconoListadoPersonas(context),
+            _navBarIconoConfiguracion(context, widget.prefs)
+          ])))
     ];
   }
 
   Widget _navBarIconoListadoPersonas(BuildContext context) {
     return GestureDetector(
-        onTap: () {
+        onTap: () async {
+          await updateListPersonas();
           _navegarListadoPersonas(context);
           myFocusNode.requestFocus();
         },
@@ -219,6 +230,12 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
     return Container(
         alignment: Alignment(0, 0),
         child: Text(texto, style: Styles.mensajeBandaMagneticaText));
+  }
+
+  Widget _renderizarFechaHora(String texto) {
+    return Container(
+        alignment: Alignment(0, 0),
+        child: Text(texto, style: Styles.mensajeFechaHoraText));
   }
 
   void _navegarListadoPersonas(BuildContext context) {
@@ -278,31 +295,34 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
             Persona? personaLeida =
                 validarUsuarioTarjeta(idTarjeta, widget._personas);
             if (personaLeida!.id != null) {
-              /*Parte parte = await Parte.getParteActivo(personaLeida);
-                                mensaje = await registrarLectura(parte, personaLeida);*/
-              var resultado = await Parte.registrarLectura(
-                  personaLeida,
-                  282,
-                  widget.prefs,
-                  extras.extraPlusPuestoTrabajo,
-                  extras.extraCambioTurno);
-              extras.clearCheckExtras();
-              showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    Future.delayed(Duration(seconds: 2), () {
-                      Navigator.of(context).pop(true);
+              if (personaLeida.isLogged) {
+                _showExtras(personaLeida);
+              } else {
+                //Registrar entrada
+                var resultado = await Parte.registrarLectura(
+                    personaLeida,
+                    282,
+                    widget.prefs,
+                    extras.extraPlusPuestoTrabajo,
+                    extras.extraCambioTurno,
+                    extras.extraColaboracion,
+                    extras.extraFormacion);
+                updateListPersonas();
+                showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      Future.delayed(Duration(seconds: 2), () {
+                        Navigator.of(context).pop(true);
+                      });
+                      return Notificacion(
+                          tipo: resultado.toLowerCase().contains('salida')
+                              ? Notificacion.logout
+                              : Notificacion.login,
+                          titulo: 'Registrado',
+                          mensaje: resultado);
                     });
-                    return Notificacion(
-                        tipo: resultado.toLowerCase().contains('salida')
-                            ? Notificacion.logout
-                            : Notificacion.login,
-                        titulo: 'Registrado',
-                        mensaje: resultado);
-                  });
+              }
             } else {
-              /*mensaje =
-                                    'ERROR. Persona con tarjeta $idTarjeta no encontrada. Avisar a informática.';*/
               showDialog(
                   context: context,
                   builder: (BuildContext context) {
@@ -327,6 +347,109 @@ class _LecturaTarjetaState extends State<LecturaTarjeta> {
       }
     }
     return mensaje;
+  }
+
+  void _showExtras(Persona persona) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (builder) {
+        return StatefulBuilder(
+          builder: (context, setstate) {
+            return Container(
+                height: 300,
+                color: Colors.white,
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              '${persona.descripcion} marca los extras necesarios antes de desconectar.',
+                              style: TextStyle(fontSize: 20.0),
+                            ),
+                          ),
+                          ElevatedButton(
+                            style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.all<Color>(
+                                        Colors.white),
+                                elevation:
+                                    MaterialStateProperty.all<double>(0)),
+                            child: Icon(Icons.close_rounded,
+                                size: 30.0, color: Colors.black),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ]),
+                    SizedBox(height: 3),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            extras.renderizarTipoPresencia(setstate),
+                            Divider(
+                              color: Colors.black54,
+                              indent: 0,
+                            ),
+                            extras.renderizarPlusesMarcaje(setstate),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: ElevatedButton(
+                              style: ButtonStyle(
+                                  padding: MaterialStateProperty.all<
+                                      EdgeInsetsGeometry>(EdgeInsets.all(10)),
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.lightGreen.shade300)),
+                              child: Text(
+                                'Desconectar',
+                                style: TextStyle(fontSize: 30.0),
+                              ),
+                              onPressed: () async {
+                                var resultado = await Parte.registrarLectura(
+                                    persona,
+                                    282,
+                                    widget.prefs,
+                                    extras.extraPlusPuestoTrabajo,
+                                    extras.extraCambioTurno,
+                                    extras.extraColaboracion,
+                                    extras.extraFormacion);
+                                extras.clearCheckExtras();
+                                updateListPersonas();
+                                Navigator.pop(context);
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      Future.delayed(Duration(seconds: 2), () {
+                                        Navigator.of(context).pop(true);
+                                      });
+                                      return Notificacion(
+                                          tipo: resultado
+                                                  .toLowerCase()
+                                                  .contains('salida')
+                                              ? Notificacion.logout
+                                              : Notificacion.login,
+                                          titulo: 'Registrado',
+                                          mensaje: resultado);
+                                    });
+                              }),
+                        )
+                      ],
+                    )
+                  ],
+                ));
+          },
+        );
+      },
+    );
   }
 
   /*_renderizarOpcionesMarcaje(setstate) {

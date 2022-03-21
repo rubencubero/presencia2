@@ -4,6 +4,8 @@ import '../classes/http.dart';
 class MockPersonas extends Persona {
   static final List<Persona> personas = [];
 
+  MockPersonas() : super(isLogged: false);
+
   static Future<List<Persona>> getPersonas(int? puntoAcceso) async {
     try {
       personas.clear();
@@ -15,7 +17,8 @@ class MockPersonas extends Persona {
               id: persona['id'].toString(),
               idTarjeta: persona['idtarjeta'].toString(),
               descripcion: persona['descri'].toString(),
-              password: persona['pwd'].toString()));
+              password: persona['pwd'].toString(),
+              isLogged: persona['isLogged'] == 1 ? true : false));
         });
       }
     } catch (e) {
@@ -29,7 +32,7 @@ class MockPersonas extends Persona {
       List<Persona> listaPersonas, String idTarjeta) {
     return listaPersonas.firstWhere((p) => p.idTarjeta == idTarjeta,
         orElse: () {
-      return Persona();
+      return Persona(isLogged: false);
     });
   }
 }

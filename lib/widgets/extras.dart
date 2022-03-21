@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 
+@immutable
 class Extras extends StatefulWidget {
   bool _extraPlusPuestoTrabajo = false;
   bool _extraCambioTurno = false;
+  bool _extraColaboracion = false;
+  bool _extraFormacion = false;
   Extras({Key? key}) : super(key: key);
 
   bool get extraPlusPuestoTrabajo => _extraPlusPuestoTrabajo;
   bool get extraCambioTurno => _extraCambioTurno;
+  bool get extraColaboracion => _extraColaboracion;
+  bool get extraFormacion => _extraFormacion;
 
   @override
   _ExtrasState createState() => _ExtrasState();
@@ -14,6 +19,108 @@ class Extras extends StatefulWidget {
   void clearCheckExtras() {
     _extraPlusPuestoTrabajo = false;
     _extraCambioTurno = false;
+    _extraColaboracion = false;
+    _extraFormacion = false;
+  }
+
+  Widget renderizarPlusesMarcaje(setstate) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Text('PLUSES:', style: TextStyle(fontSize: 20.0)),
+          SizedBox(width: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Transform.scale(
+                scale: 2,
+                child: Checkbox(
+                    value: _extraPlusPuestoTrabajo,
+                    onChanged: (bool? newValue) {
+                      setstate(() {
+                        _extraPlusPuestoTrabajo = newValue!;
+                      });
+                    }),
+              ),
+              SizedBox(width: 10),
+              Text('Puesto trabajo', style: TextStyle(fontSize: 20.0))
+            ],
+          ),
+          SizedBox(width: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Transform.scale(
+                scale: 2,
+                child: Checkbox(
+                    value: _extraCambioTurno,
+                    onChanged: (bool? newValue) {
+                      setstate(() {
+                        _extraCambioTurno = newValue!;
+                      });
+                    }),
+              ),
+              SizedBox(width: 10),
+              Text('Cambio de turno', style: TextStyle(fontSize: 20.0))
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget renderizarTipoPresencia(setstate) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Text('TIPO:', style: TextStyle(fontSize: 20.0)),
+          SizedBox(width: 28),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Transform.scale(
+                scale: 2,
+                child: Checkbox(
+                    value: _extraColaboracion,
+                    onChanged: (bool? newValue) {
+                      setstate(() {
+                        _extraColaboracion = newValue!;
+                      });
+                    }),
+              ),
+              SizedBox(width: 10),
+              Text('Colaboración', style: TextStyle(fontSize: 20.0))
+            ],
+          ),
+          SizedBox(width: 20),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Transform.scale(
+                scale: 2,
+                child: Checkbox(
+                    value: _extraFormacion,
+                    onChanged: (bool? newValue) {
+                      setstate(() {
+                        _extraFormacion = newValue!;
+                      });
+                    }),
+              ),
+              SizedBox(width: 10),
+              Text('Formación', style: TextStyle(fontSize: 20.0))
+            ],
+          )
+        ],
+      ),
+    );
   }
 }
 
@@ -75,7 +182,7 @@ class _ExtrasState extends State<Extras> {
                               ),
                             ],
                           ),
-                          _renderizarOpcionesMarcaje(setstate)
+                          //_renderizarOpcionesMarcaje(setstate)
                         ],
                       ));
                 },
@@ -83,53 +190,5 @@ class _ExtrasState extends State<Extras> {
             },
           );
         });
-  }
-
-  _renderizarOpcionesMarcaje(setstate) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Transform.scale(
-                scale: 2,
-                child: Checkbox(
-                    value: widget._extraPlusPuestoTrabajo,
-                    onChanged: (bool? newValue) {
-                      setstate(() {
-                        widget._extraPlusPuestoTrabajo = newValue!;
-                      });
-                    }),
-              ),
-              Text('Plus puesto trabajo', style: TextStyle(fontSize: 20.0))
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Transform.scale(
-                scale: 2,
-                child: Checkbox(
-                    value: widget._extraCambioTurno,
-                    onChanged: (bool? newValue) {
-                      setstate(() {
-                        widget._extraCambioTurno = newValue!;
-                      });
-                    }),
-              ),
-              Text('Cambio de turno', style: TextStyle(fontSize: 20.0))
-            ],
-          ),
-        )
-      ],
-    );
   }
 }
