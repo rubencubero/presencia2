@@ -92,6 +92,7 @@ class Extras extends StatefulWidget {
                     onChanged: (bool? newValue) {
                       setstate(() {
                         _extraColaboracion = newValue!;
+                        if (newValue) _extraFormacion = !_extraColaboracion;
                       });
                     }),
               ),
@@ -111,6 +112,7 @@ class Extras extends StatefulWidget {
                     onChanged: (bool? newValue) {
                       setstate(() {
                         _extraFormacion = newValue!;
+                        if (newValue) _extraColaboracion = !_extraFormacion;
                       });
                     }),
               ),
